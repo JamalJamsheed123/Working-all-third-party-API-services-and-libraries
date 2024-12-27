@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import com.bumptech.glide.Glide
+import com.example.demoapp_working_all_third_party_api_services.GSONModel.Company
+import com.google.gson.Gson
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 import com.squareup.picasso.Picasso
@@ -55,8 +57,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         thread{httpRequest("https://api.github.com/orgs/google")}
+
         thread{okhttpRequest("https://api.github.com/orgs/google")}
 
+        Thread {
+            val avatarUrl = gsonRequest1("https://api.github.com/orgs/google")
+            Log.d("gsonExample1", "avatarUrl: $avatarUrl")
+        }.start()
+
+        Thread {
+            val publicMemberUrl = gsonRequest2("https://api.github.com/orgs/google")
+            Log.d("gsonExample2", "publicMemberUrl: $publicMemberUrl")
+        }.start()
     }
 
     // Send the request to network and receive the result using HttpURLConnection Using Log message
@@ -74,9 +86,17 @@ class MainActivity : AppCompatActivity() {
        }
 
     // Retreive Particular Data from network using GSON Library
-    private fun gsonRequest(urlStr: String){
+    private fun gsonRequest1(urlStr: String): String{
         val request = okhttp3.Request.Builder().url(urlStr).build()
         val response = OkHttpClient().newCall(request).execute().body?.string()
-        Log.d("gsonExample", "request: $response")
+        val company = Gson().fromJson(response, Company::class.java)
+        return company.avatarUrl
     }
+
+    private fun gsonRequest2(urlStr: String): String{
+        val request = okhttp3.Request.Builder().url(urlStr).build()
+        val response = OkHttpClient().newCall(request).execute().body?.string()
+        val company = Gson().fromJson(response, Company::class.java)
+        return company.publicMemberUrl
     }
+}

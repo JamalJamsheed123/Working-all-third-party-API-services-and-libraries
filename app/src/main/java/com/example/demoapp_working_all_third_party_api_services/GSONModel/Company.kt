@@ -4,5 +4,8 @@ import com.google.gson.annotations.SerializedName
 
 data class Company(
     @SerializedName("avatar_url")
-    val avatarUrl: String
+    val avatarUrl: String ,
+
+    @SerializedName("public_members_url")
+    val publicMemberUrl: String
 )
