@@ -17,6 +17,8 @@ import com.bumptech.glide.Glide
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 import com.squareup.picasso.Picasso
+import com.squareup.picasso.Request
+import okhttp3.OkHttpClient
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -52,13 +54,29 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        thread{request("https://api.github.com/orgs/google")}
+        thread{httpRequest("https://api.github.com/orgs/google")}
+        thread{okhttpRequest("https://api.github.com/orgs/google")}
+
     }
 
     // Send the request to network and receive the result using HttpURLConnection Using Log message
-    private fun request(urlStr: String){
+    private fun httpRequest(urlStr: String){
         val connection = URL(urlStr).openConnection() as HttpURLConnection
         val response = connection.inputStream.bufferedReader().use(BufferedReader::readLine)
         Log.d("HttpExample", "request: $response")
        }
+
+    // Send the request to network and receive the result using OkHttp Using Log message
+    private fun okhttpRequest(urlStr: String){
+        val request = okhttp3.Request.Builder().url(urlStr).build()
+        val response = OkHttpClient().newCall(request).execute().body?.string()
+        Log.d("OKHttpExample", "request: $response")
+       }
+
+    // Retreive Particular Data from network using GSON Library
+    private fun gsonRequest(urlStr: String){
+        val request = okhttp3.Request.Builder().url(urlStr).build()
+        val response = OkHttpClient().newCall(request).execute().body?.string()
+        Log.d("gsonExample", "request: $response")
+    }
     }

@@ -59,10 +59,16 @@ dependencies {
     // image loading Picasso
     implementation("com.squareup.picasso:picasso:2.71828")
 
-    //Jetpack Compose
+    // Jetpack Compose
     implementation("androidx.activity:activity-compose:1.5.1")
     implementation("androidx.compose.material:material:1.2.1")
 
-    //Glide For Compose
+    // Glide For Compose
     implementation("com.github.skydoves:landscapist-glide:2.0.0")
+
+    // OkHttp client
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+
+    //GSON
+    implementation("com.google.code.gson:gson:2.8.9")
 }
