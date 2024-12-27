@@ -2,6 +2,7 @@ package com.example.demoapp_working_all_third_party_api_services
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -16,6 +17,10 @@ import com.bumptech.glide.Glide
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 import com.squareup.picasso.Picasso
+import java.io.BufferedReader
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,5 +51,14 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         }
+
+        thread{request("https://api.github.com/orgs/google")}
     }
-}
+
+    // Send the request to network and receive the result using HttpURLConnection Using Log message
+    private fun request(urlStr: String){
+        val connection = URL(urlStr).openConnection() as HttpURLConnection
+        val response = connection.inputStream.bufferedReader().use(BufferedReader::readLine)
+        Log.d("HttpExample", "request: $response")
+       }
+    }
