@@ -24,6 +24,10 @@ import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import java.io.BufferedReader
 import java.net.HttpURLConnection
@@ -51,21 +55,21 @@ class MainActivity : AppCompatActivity() {
 
         Thread {
             val avatarUrl = gsonRequest1("https://api.github.com/orgs/google")
-            Log.d("gsonExample1", "avatarUrl: $avatarUrl")
+            Log.d("GsonExample1", "avatarUrl: $avatarUrl")
         }.start()
 
         Thread {
             val publicMemberUrl = gsonRequest2("https://api.github.com/orgs/google")
-            Log.d("gsonExample2", "publicMemberUrl: $publicMemberUrl")
+            Log.d("GsonExample2", "publicMemberUrl: $publicMemberUrl")
         }.start()
 
 
         //handle multi-threading using RX-java
-        val disposable = rxjavaRequest("https://api.github.com/orgs/google")
+       /* val disposable = rxjavaRequest("https://api.github.com/orgs/google")
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {avatarUrl ->
-                Log.d("rxjavaExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
+                Log.d("RXJavaExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
                 setContent {
                     Box(modifier = Modifier
                         .fillMaxSize()
@@ -81,7 +85,29 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+            }*/
+
+        //handle multi-threading using Kotlin Coroutines
+
+        runBlocking {
+            val avatarUrl = coroutinesRequest("https://api.github.com/orgs/google")
+            Log.d("CoroutinesExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
+            setContent {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Yellow)
+                )
+
+                GlideImage (
+                    //imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
+                    avatarUrl,
+                    imageOptions = ImageOptions(
+                        contentScale = ContentScale.FillBounds,
+                        alignment = Alignment.Center
+                    )
+                )
             }
+        }
     }
 
     // Send the request to network and receive the result using HttpURLConnection Using Log message
@@ -121,5 +147,14 @@ class MainActivity : AppCompatActivity() {
             val company = Gson().fromJson(response, Company::class.java)
             company.avatarUrl
         }
+    }
+
+    // Using Kotlin Coroutines to handle multi-threading when receiving requests
+    private suspend fun coroutinesRequest(urlStr: String) = withContext(Dispatchers.IO) {
+            val request = okhttp3.Request.Builder().url(urlStr).build()
+            val response = OkHttpClient().newCall(request).execute().body?.string()
+            val company = Gson().fromJson(response, Company::class.java)
+            company.avatarUrl
+
     }
 }
