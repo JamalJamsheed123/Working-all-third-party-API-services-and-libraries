@@ -20,6 +20,10 @@ import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Request
+import io.reactivex.Scheduler
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import java.io.BufferedReader
 import java.net.HttpURLConnection
@@ -40,21 +44,6 @@ class MainActivity : AppCompatActivity() {
             .load("Image Loader APP")
             .into(findViewById<ImageView>(R.id.imageView))*/
 
-        //Jetpack Compose
-        setContent {
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Yellow)
-            )
-
-            GlideImage (
-                imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
-                imageOptions = ImageOptions(
-                    contentScale = ContentScale.FillBounds,
-                    alignment = Alignment.Center
-                )
-            )
-        }
 
         thread{httpRequest("https://api.github.com/orgs/google")}
 
@@ -69,6 +58,30 @@ class MainActivity : AppCompatActivity() {
             val publicMemberUrl = gsonRequest2("https://api.github.com/orgs/google")
             Log.d("gsonExample2", "publicMemberUrl: $publicMemberUrl")
         }.start()
+
+
+        //handle multi-threading using RX-java
+        val disposable = rxjavaRequest("https://api.github.com/orgs/google")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {avatarUrl ->
+                Log.d("rxjavaExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
+                setContent {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Yellow)
+                    )
+
+                    GlideImage (
+                        //imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
+                        avatarUrl,
+                        imageOptions = ImageOptions(
+                            contentScale = ContentScale.FillBounds,
+                            alignment = Alignment.Center
+                        )
+                    )
+                }
+            }
     }
 
     // Send the request to network and receive the result using HttpURLConnection Using Log message
@@ -98,5 +111,15 @@ class MainActivity : AppCompatActivity() {
         val response = OkHttpClient().newCall(request).execute().body?.string()
         val company = Gson().fromJson(response, Company::class.java)
         return company.publicMemberUrl
+    }
+
+    // Using Rxjava to handle multi-threading when receiving requests
+    private fun rxjavaRequest(urlStr: String): Single<String> {
+        return Single.fromCallable{
+            val request = okhttp3.Request.Builder().url(urlStr).build()
+            val response = OkHttpClient().newCall(request).execute().body?.string()
+            val company = Gson().fromJson(response, Company::class.java)
+            company.avatarUrl
+        }
     }
 }
