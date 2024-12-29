@@ -25,6 +25,10 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Dispatcher
@@ -89,7 +93,7 @@ class MainActivity : AppCompatActivity() {
 
         //handle multi-threading using Kotlin Coroutines
 
-        runBlocking {
+       /* runBlocking {
             val avatarUrl = coroutinesRequest("https://api.github.com/orgs/google")
             Log.d("CoroutinesExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
             setContent {
@@ -107,6 +111,35 @@ class MainActivity : AppCompatActivity() {
                     )
                 )
             }
+        }*/
+
+        //handle multi-threading using Kotlin Flow
+
+        runBlocking {
+
+            val avatarUrl = kotlinFlowRequest("https://api.github.com/orgs/google")
+                .flowOn(Dispatchers.IO)
+                .collect{avatarUrl ->
+
+                    setContent {
+
+                        Log.d("KotlinFlowExample", "avatarUrl: $avatarUrl thread ${Thread.currentThread().name}")
+
+                        Box(modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Yellow)
+                        )
+
+                        GlideImage (
+                            //imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
+                            avatarUrl,
+                            imageOptions = ImageOptions(
+                                contentScale = ContentScale.FillBounds,
+                                alignment = Alignment.Center
+                            )
+                        )
+                    }
+                }
         }
     }
 
@@ -155,6 +188,15 @@ class MainActivity : AppCompatActivity() {
             val response = OkHttpClient().newCall(request).execute().body?.string()
             val company = Gson().fromJson(response, Company::class.java)
             company.avatarUrl
+
+    }
+
+    // Using Kotlin Flow to handle multi-threading when receiving requests
+    private fun kotlinFlowRequest(urlStr: String): Flow<String> = flow {
+        val request = okhttp3.Request.Builder().url(urlStr).build()
+        val response = OkHttpClient().newCall(request).execute().body?.string()
+        val company = Gson().fromJson(response, Company::class.java)
+        emit(company.avatarUrl)
 
     }
 }
