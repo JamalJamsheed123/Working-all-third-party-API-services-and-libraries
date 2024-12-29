@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import com.bumptech.glide.Glide
 import com.example.demoapp_working_all_third_party_api_services.GSONModel.Company
+import com.example.demoapp_working_all_third_party_api_services.Services.RetrofitServices
 import com.google.gson.Gson
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
@@ -33,6 +34,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -141,6 +145,30 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
         }
+
+        // Sending a request to network and getting the result with Retrofit
+
+        val disposable = kotlinRetrofitRequest("https://api.github.com")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {company ->
+                Log.d("RetrofitExample", "avatarUrl: ${company.avatarUrl} thread ${Thread.currentThread().name}")
+                setContent {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Yellow)
+                    )
+
+                    GlideImage (
+                        //imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
+                        company.avatarUrl,
+                        imageOptions = ImageOptions(
+                            contentScale = ContentScale.FillBounds,
+                            alignment = Alignment.Center
+                        )
+                    )
+                }
+            }
     }
 
     // Send the request to network and receive the result using HttpURLConnection Using Log message
@@ -198,5 +226,15 @@ class MainActivity : AppCompatActivity() {
         val company = Gson().fromJson(response, Company::class.java)
         emit(company.avatarUrl)
 
+    }
+
+    private fun kotlinRetrofitRequest(urlStr: String): Single<Company>{
+        return Retrofit.Builder()
+            .baseUrl(urlStr)
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(Gson()))
+            .build()
+            .create(RetrofitServices::class.java)
+            .company
     }
 }
