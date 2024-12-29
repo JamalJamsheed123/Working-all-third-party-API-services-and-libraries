@@ -9,12 +9,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import com.bumptech.glide.Glide
 import com.example.demoapp_working_all_third_party_api_services.GSONModel.Company
+import com.example.demoapp_working_all_third_party_api_services.GSONModel.Member
 import com.example.demoapp_working_all_third_party_api_services.Services.RetrofitServices
 import com.google.gson.Gson
 import com.skydoves.landscapist.ImageOptions
@@ -119,7 +123,7 @@ class MainActivity : AppCompatActivity() {
 
         //handle multi-threading using Kotlin Flow
 
-        runBlocking {
+        /*runBlocking {
 
             val avatarUrl = kotlinFlowRequest("https://api.github.com/orgs/google")
                 .flowOn(Dispatchers.IO)
@@ -144,11 +148,11 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 }
-        }
+        }*/
 
         // Sending a request to network and getting the result with Retrofit
 
-        val disposable = kotlinRetrofitRequest("https://api.github.com")
+       /* val disposable = kotlinRetrofitRequest("https://api.github.com")
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {company ->
@@ -167,6 +171,35 @@ class MainActivity : AppCompatActivity() {
                             alignment = Alignment.Center
                         )
                     )
+                }
+            }*/
+
+        // Getting a List of pictures using with Retrofit
+
+        val disposable = getListPicturesRetrofitRequest("https://api.github.com/")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {members ->
+                Log.d("GettingListOfPicturesRetrofitExample", "avatarUrl: ${members} ")
+                setContent {
+/*                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Yellow)
+                    )*/
+
+                    LazyVerticalGrid(columns = GridCells.Fixed(3)){
+                        itemsIndexed(members) { _,member ->
+                            GlideImage (
+                                //imageModel = "https://avatars.githubusercontent.com/u/1342004?v=4",
+                                member.avatarUrl,
+                                imageOptions = ImageOptions(
+                                    contentScale = ContentScale.Fit ,
+                                    alignment = Alignment.Center
+                                )
+                            )
+                        }
+                    }
+
                 }
             }
     }
@@ -228,7 +261,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun kotlinRetrofitRequest(urlStr: String): Single<Company>{
+    // Sending a request to network and getting the result with Retrofit
+
+   /* private fun kotlinRetrofitRequest(urlStr: String): Single<Company>{
         return Retrofit.Builder()
             .baseUrl(urlStr)
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
@@ -236,5 +271,16 @@ class MainActivity : AppCompatActivity() {
             .build()
             .create(RetrofitServices::class.java)
             .company
+    }*/
+
+    // Getting a List of pictures using with Retrofit
+    private fun getListPicturesRetrofitRequest(urlStr: String): Single<List<Member>>{
+        return Retrofit.Builder()
+            .baseUrl(urlStr)
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(Gson()))
+            .build()
+            .create(RetrofitServices::class.java)
+            .members
     }
 }
